@@ -1,13 +1,14 @@
-function [ outvals ] = read_atmel_file( filename, format )
+function [ outvals ] = read_atmel_file( filename, format,signed )
 %UNTITLED2 read a hex atmel studio output file
 outvals = [];
 if nargin == 1
     format = 1;
+    signed = 0;
 end
-%format = 1 for 8 bit signed ints
-%format = 2 for 16 bit signed ints
+%format = 1 for 8 bit unsigned ints
+%format = 2 for 16 bit unsigned ints
 %format = 3 for 16-bit complex ints
-%format = 4 for 32-bit signed ints
+%format = 4 for 32-bit unsigned ints
 %format = 5 for 32-bit complex ints
 %format = 6 for 32-bit floats
 switch format
@@ -27,8 +28,9 @@ switch format
         bytesperint = 4;
         complexints = 1;
     case 6
-         bytesperint = 4;
+        bytesperint = 4;
         complexints = 0;
+        signed = 1; %floats always signed
     otherwise
         bytesperint = 1;
         complexints = 0;
@@ -61,9 +63,11 @@ end
 if format == 6
     outvals = typecast(uint32(outvals), 'single');
 else
-    maxint = 2^(bytesperint*8-1)-1;
-    index = find(outvals > maxint);
-    outvals(index) = outvals(index)-2^(bytesperint*8);
+    if (signed)
+        maxint = 2^(bytesperint*8-1)-1;
+        index = find(outvals > maxint);
+        outvals(index) = outvals(index)-2^(bytesperint*8);
+    end
     if (complexints) %if complex
         outvals  = outvals(1:2:end) + outvals(2:2:end).*sqrt(-1);
     end
